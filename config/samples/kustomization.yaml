@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- scheduling_v1_podgroup.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples
