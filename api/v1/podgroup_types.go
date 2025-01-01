@@ -42,8 +42,26 @@ type PodGroupStatus struct {
 	// Phase indicates current state of PodGroup
 	Phase string `json:"phase,omitempty"`
 
+	// PodMetaList contains pods information in the same PodGroup
+	PodMetaList []PodMeta `json:"pod_meta_list,omitempty"`
+
 	// Message containers additional information of PodGroup
 	Message string `json:"message,omitempty"`
+}
+
+// PodMeta is the meta informatino of one pod
+type PodMeta struct {
+	// Name is the name of pod
+	Name string `json:"name,omitempty"`
+
+	// Ip is podIP in a k8s cluster, a pod can find other pods ips in the same PodGroup by this
+	IP string `json:"ip,omitempty"`
+
+	// HostIP is the node ip that pod started at
+	HostIP string `json:"host_ip,omitempty"`
+
+	// Phase of pod
+	Phase string `json:"phase,omitempty"`
 }
 
 // +kubebuilder:object:root=true
