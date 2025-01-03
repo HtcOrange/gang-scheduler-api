@@ -1,0 +1,84 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: podgroups.scheduling.github.com
+spec:
+  group: scheduling.github.com
+  names:
+    kind: PodGroup
+    listKind: PodGroupList
+    plural: podgroups
+    singular: podgroup
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: PodGroup is the Schema for the podgroups API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PodGroupSpec defines the desired state of PodGroup.
+            properties:
+              group_name:
+                description: GroupName is the name of PodGroup
+                type: string
+              min_num:
+                description: MinNum is the min number of the pods created that need
+                  to be scheduled
+                type: integer
+            type: object
+          status:
+            description: PodGroupStatus defines the observed state of PodGroup.
+            properties:
+              message:
+                description: Message containers additional information of PodGroup
+                type: string
+              phase:
+                description: Phase indicates current state of PodGroup
+                type: string
+              pod_meta_list:
+                description: PodMetaList contains pods information in the same PodGroup
+                items:
+                  description: PodMeta is the meta informatino of one pod
+                  properties:
+                    host_ip:
+                      description: HostIP is the node ip that pod started at
+                      type: string
+                    ip:
+                      description: Ip is podIP in a k8s cluster, a pod can find other
+                        pods ips in the same PodGroup by this
+                      type: string
+                    name:
+                      description: Name is the name of pod
+                      type: string
+                    phase:
+                      description: Phase of pod
+                      type: string
+                  type: object
+                type: array
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

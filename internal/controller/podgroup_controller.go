@@ -41,6 +41,7 @@ type PodGroupReconciler struct {
 // +kubebuilder:rbac:groups=scheduling.github.com,resources=podgroups,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=scheduling.github.com,resources=podgroups/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=scheduling.github.com,resources=podgroups/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=pods,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -80,7 +81,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if podCount >= podGroup.Spec.MinNum {
 		if scheduledPodNum < podCount {
 			// some of pods are still pending
-			podGroup.Status.Phase = "CreatedReadyAndScheduling"
+			podGroup.Status.Phase = "PartialScheduled"
 		} else {
 			// all of the pods are scheduled
 			podGroup.Status.Phase = "Ready"
@@ -88,7 +89,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	} else {
 		// count of pods created is less than min num
-		podGroup.Status.Phase = "Waiting"
+		podGroup.Status.Phase = "PartialCreated"
 	}
 
 	// update PodGroup status
