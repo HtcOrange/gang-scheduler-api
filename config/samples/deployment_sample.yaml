@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-sample
+  namespace: default
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: podgroup-controller
+      pod-group: podgroup-sample
+  template:
+    metadata:
+      labels:
+        app: podgroup-controller
+        pod-group: podgroup-sample
+    spec:
+      containers:
+        - args:
+          - -c
+          - tail -f /dev/null
+          name: busybox
+          image: busybox
+          command:
+          - /bin/sh
