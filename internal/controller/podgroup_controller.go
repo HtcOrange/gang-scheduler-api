@@ -81,7 +81,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	if podCount >= podGroup.Spec.MinNum {
 		if scheduledPodNum < podCount {
 			// some of pods are still pending
-			podGroup.Status.Phase = "CreatedReadyAndScheduling"
+			podGroup.Status.Phase = "PartialScheduled"
 		} else {
 			// all of the pods are scheduled
 			podGroup.Status.Phase = "Ready"
@@ -89,7 +89,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	} else {
 		// count of pods created is less than min num
-		podGroup.Status.Phase = "Waiting"
+		podGroup.Status.Phase = "PartialCreated"
 	}
 
 	// update PodGroup status
