@@ -22,6 +22,8 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the Project itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
+- gang_editor_role.yaml
+- gang_viewer_role.yaml
 - podgroup_editor_role.yaml
 - podgroup_viewer_role.yaml
 

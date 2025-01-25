@@ -1,0 +1,23 @@
+# permissions for end users to view gangs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: gang-scheduler-api
+    app.kubernetes.io/managed-by: kustomize
+  name: gang-viewer-role
+rules:
+- apiGroups:
+  - scheduling.github.com
+  resources:
+  - gangs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - scheduling.github.com
+  resources:
+  - gangs/status
+  verbs:
+  - get

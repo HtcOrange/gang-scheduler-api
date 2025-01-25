@@ -1,0 +1,9 @@
+apiVersion: scheduling.github.com/v1
+kind: Gang
+metadata:
+  labels:
+    app.kubernetes.io/name: gang-scheduler-api
+    app.kubernetes.io/managed-by: kustomize
+  name: gang-sample
+spec:
+  # TODO(user): Add fields here
