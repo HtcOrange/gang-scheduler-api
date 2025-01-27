@@ -70,6 +70,8 @@ type PodMeta struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // PodGroup is the Schema for the podgroups API.
 type PodGroup struct {
 	metav1.TypeMeta   `json:",inline"`

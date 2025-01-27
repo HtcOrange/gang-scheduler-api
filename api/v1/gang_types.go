@@ -39,11 +39,9 @@ type GangSpec struct {
 }
 
 type PodGroupTemplate struct {
-	// PodGroup metadata
-	Metadata metav1.ObjectMeta `json:"metadata,omitempty"`
-
+	Labels map[string]string `json:"labels,omitempty"`
 	// PodGroup spec
-	Spec PodGroupSpec `json:"spec"`
+	Spec PodGroupSpec `json:"spec,omitempty"`
 }
 
 // GangStatus defines the observed state of Gang.

@@ -51,8 +51,9 @@ spec:
               template:
                 description: PodGroup template
                 properties:
-                  metadata:
-                    description: PodGroup metadata
+                  labels:
+                    additionalProperties:
+                      type: string
                     type: object
                   spec:
                     description: PodGroup spec
@@ -8146,8 +8147,6 @@ spec:
                             type: object
                         type: object
                     type: object
-                required:
-                - spec
                 type: object
             type: object
           status:
