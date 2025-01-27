@@ -1,14 +1,15 @@
 apiVersion: scheduling.github.com/v1
 kind: Gang
 metadata:
-  name: my-gang
+  namespace: default
+  name: my-group
 spec:
   replicas: 2  # 创建 2 个 PodGroup 副本
   labels:
-    app: my-gang
+    app: my-group
   template:
     labels:
-      app: my-gang
+      app: my-group
     spec:
       min_num: 2  # 每个 PodGroup 至少需要 2 个 Ready Pod
       group_name: my-group

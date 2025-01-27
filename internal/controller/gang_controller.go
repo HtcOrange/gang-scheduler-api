@@ -83,7 +83,7 @@ func (r *GangReconciler) reconcilePodGroups(ctx context.Context, gang *v1.Gang) 
 	for i := int32(0); i < gang.Spec.Replicas; i++ {
 		podGroup := &v1.PodGroup{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("%s-%d", gang.Name, i),
+				Name:      fmt.Sprintf("%s-%d", gang.Spec.Template.Spec.GroupName, i),
 				Namespace: gang.Namespace,
 				Labels:    gang.Spec.Labels,
 			},

@@ -19,6 +19,7 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
@@ -63,20 +64,41 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		}
 	}
 
-	// create or update pod
-	if err := r.reconcilePods(ctx, &podGroup); err != nil {
-		logger.Error(err, "Failed to reconcile Pods")
-		return ctrl.Result{}, err
-	}
-
 	// get podlist in one podgroup
 	var pods corev1.PodList
 	if err := r.List(ctx, &pods, client.InNamespace(podGroup.Namespace), client.MatchingLabels{"pod-group": podGroup.Spec.GroupName}); err != nil {
 		logger.Error(err, "Failed to get pod list")
 		return ctrl.Result{}, err
 	}
+
+	waitToCreatedNum := podGroup.Spec.MinNum - len(pods.Items)
+	for i := 0; i < waitToCreatedNum; i++ {
+		pod := &corev1.Pod{
+			ObjectMeta: podGroup.Spec.Template.ObjectMeta,
+			Spec:       podGroup.Spec.Template.Spec,
+		}
+		pod.Name = podGroup.Name + "-" + strconv.Itoa(i)
+		pod.Namespace = podGroup.Namespace
+		if pod.Labels == nil {
+			pod.Labels = make(map[string]string)
+		}
+		pod.Labels["pod-group"] = podGroup.Name
+		if err := ctrl.SetControllerReference(&podGroup, pod, r.Scheme); err != nil {
+			return ctrl.Result{}, err
+		}
+		if err := r.Create(ctx, pod); err != nil && !errors.IsAlreadyExists(err) {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// get pod list twice
+	if err := r.List(ctx, &pods, client.InNamespace(podGroup.Namespace), client.MatchingLabels{"pod-group": podGroup.Name}); err != nil {
+		logger.Error(err, "Failed to get pod list")
+		return ctrl.Result{}, err
+	}
+
 	podCount := len(pods.Items)
-	logger.Info("PodGroup status", "GroupName", podGroup.Spec.GroupName, "PodCount", podCount)
+	logger.Info("PodGroup status", "GroupName", podGroup.Name, "PodCount", podCount)
 
 	scheduledPodNum, podMetaList := getPodsScheduledNumAndMetaList(pods)
 	podGroup.Status.PodMetaList = podMetaList
@@ -90,7 +112,7 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		} else {
 			// all of the pods are scheduled
 			podGroup.Status.Phase = "Ready"
-			podGroup.Status.Message = fmt.Sprintf("PodGroup %s is Ready", podGroup.Spec.GroupName)
+			podGroup.Status.Message = fmt.Sprintf("PodGroup %s is Ready", podGroup.Name)
 		}
 	} else {
 		// count of pods created is less than min num
@@ -99,27 +121,11 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// update PodGroup status
 	if err := r.Status().Update(ctx, &podGroup); err != nil {
-		logger.Error(err, "Update PodGroup status failed", podGroup.Spec.GroupName)
+		logger.Error(err, "Update PodGroup status failed", podGroup.Name)
 		return ctrl.Result{}, nil
 	}
 
 	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
-}
-
-func (r *PodGroupReconciler) reconcilePods(ctx context.Context, podGroup *v1.PodGroup) error {
-	pod := &corev1.Pod{
-		ObjectMeta: podGroup.Spec.Template.ObjectMeta,
-		Spec:       podGroup.Spec.Template.Spec,
-	}
-
-	if err := ctrl.SetControllerReference(podGroup, pod, r.Scheme); err != nil {
-		return err
-	}
-
-	if err := r.Create(ctx, pod); err != nil && !errors.IsAlreadyExists(err) {
-		return err
-	}
-	return nil
 }
 
 func getPodsScheduledNumAndMetaList(podList corev1.PodList) (int, []v1.PodMeta) {
@@ -146,5 +152,6 @@ func (r *PodGroupReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&schedulingv1.PodGroup{}).
 		Named("podgroup").
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
