@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -32,6 +33,8 @@ type PodGroupSpec struct {
 	GroupName string `json:"group_name,omitempty"`
 	// MinNum is the min number of the pods created that need to be scheduled
 	MinNum int `json:"min_num,omitempty"`
+	// Template is the pod tempalte
+	Template corev1.PodTemplateSpec `json:"template,omitempty"`
 }
 
 // PodGroupStatus defines the observed state of PodGroup.

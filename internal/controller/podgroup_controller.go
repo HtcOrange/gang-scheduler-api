@@ -54,7 +54,6 @@ type PodGroupReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/reconcile
 func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
-
 	// get podgroup
 	var podGroup schedulingv1.PodGroup
 	if err := r.Get(ctx, req.NamespacedName, &podGroup); err != nil {
@@ -62,6 +61,12 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			// podgroup has been deleted
 			return ctrl.Result{}, err
 		}
+	}
+
+	// create or update pod
+	if err := r.reconcilePods(ctx, &podGroup); err != nil {
+		logger.Error(err, "Failed to reconcile Pods")
+		return ctrl.Result{}, err
 	}
 
 	// get podlist in one podgroup
@@ -99,6 +104,22 @@ func (r *PodGroupReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	return ctrl.Result{RequeueAfter: 3 * time.Second}, nil
+}
+
+func (r *PodGroupReconciler) reconcilePods(ctx context.Context, podGroup *v1.PodGroup) error {
+	pod := &corev1.Pod{
+		ObjectMeta: podGroup.Spec.Template.ObjectMeta,
+		Spec:       podGroup.Spec.Template.Spec,
+	}
+
+	if err := ctrl.SetControllerReference(podGroup, pod, r.Scheme); err != nil {
+		return err
+	}
+
+	if err := r.Create(ctx, pod); err != nil && !errors.IsAlreadyExists(err) {
+		return err
+	}
+	return nil
 }
 
 func getPodsScheduledNumAndMetaList(podList corev1.PodList) (int, []v1.PodMeta) {

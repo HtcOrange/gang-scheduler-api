@@ -1,9 +1,25 @@
 apiVersion: scheduling.github.com/v1
 kind: Gang
 metadata:
-  labels:
-    app.kubernetes.io/name: gang-scheduler-api
-    app.kubernetes.io/managed-by: kustomize
-  name: gang-sample
+  name: my-gang
 spec:
-  # TODO(user): Add fields here
+  replicas: 2  # 创建 2 个 PodGroup 副本
+  labels:
+    app: my-gang-app
+  template:
+    metadata:
+      labels:
+        app: my-gang-app
+    spec:
+      minMember: 2  # 每个 PodGroup 至少需要 2 个 Ready Pod
+      groupName: my-group
+      template:
+        metadata:
+          labels:
+            app: my-pod
+        spec:
+          containers:
+          - name: nginx
+            image: nginx:latest
+            ports:
+            - containerPort: 80
