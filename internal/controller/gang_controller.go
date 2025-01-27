@@ -18,13 +18,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	schedulingv1 "github.com/HtcOrange/gang-scheduler-api/api/v1"
+	v1 "github.com/HtcOrange/gang-scheduler-api/api/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // GangReconciler reconciles a Gang object
@@ -47,11 +51,70 @@ type GangReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/reconcile
 func (r *GangReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	// get gang
+	var gang v1.Gang
+	if err := r.Get(ctx, req.NamespacedName, &gang); err != nil {
+		if errors.IsNotFound(err) {
+			log.Info("Gang resource not found. Ignoring since object must be deleted.")
+			return ctrl.Result{}, nil
+		}
+		log.Error(err, "Failed to get Gang")
+		return ctrl.Result{}, err
+	}
+
+	// create or update PodGroup
+	if err := r.reconcilePodGroups(ctx, &gang); err != nil {
+		log.Error(err, "Failed to reconcile PodGroups")
+		return ctrl.Result{}, err
+	}
+
+	// update Gang status
+	if err := r.updateGangStatus(ctx, &gang); err != nil {
+		log.Error(err, "Failed to update Gang status")
+		return ctrl.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *GangReconciler) reconcilePodGroups(ctx context.Context, gang *v1.Gang) error {
+	for i := int32(0); i < gang.Spec.Replicas; i++ {
+		podGroup := &v1.PodGroup{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("%s-%d", gang.Name, i),
+				Namespace: gang.Namespace,
+				Labels:    gang.Spec.Labels,
+			},
+			Spec: gang.Spec.Template.Spec,
+		}
+
+		if err := ctrl.SetControllerReference(gang, podGroup, r.Scheme); err != nil {
+			return err
+		}
+		if err := r.Create(ctx, podGroup); err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *GangReconciler) updateGangStatus(ctx context.Context, gang *v1.Gang) error {
+	var podGroupList v1.PodGroupList
+	if err := r.List(ctx, &podGroupList, client.InNamespace(gang.Namespace), client.MatchingLabels(gang.Spec.Labels)); err != nil {
+		return err
+	}
+
+	readyReplicas := int32(0)
+	for _, podGroup := range podGroupList.Items {
+		if podGroup.Status.Phase == "Ready" {
+			readyReplicas++
+		}
+	}
+
+	gang.Status.ReadyReplicas = readyReplicas
+	return r.Status().Update(ctx, gang)
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -28,14 +28,34 @@ type GangSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Gang. Edit gang_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Replicas is the replica of Gang
+	Replicas int32 `json:"replicas,omitempty"`
+
+	// Gang labels
+	Labels map[string]string `json:"labels,omitempty"`
+
+	// PodGroup template
+	Template PodGroupTemplate `json:"template,omitempty"`
+}
+
+type PodGroupTemplate struct {
+	// PodGroup metadata
+	Metadata metav1.ObjectMeta `json:"metadata,omitempty"`
+
+	// PodGroup spec
+	Spec PodGroupSpec `json:"spec"`
 }
 
 // GangStatus defines the observed state of Gang.
 type GangStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+
+	// ready replicas
+	ReadyReplicas int32 `json:"ready_replicas"`
+
+	// conditions
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
