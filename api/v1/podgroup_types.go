@@ -69,6 +69,7 @@ type PodMeta struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Namespaced
 
 // PodGroup is the Schema for the podgroups API.
 type PodGroup struct {
